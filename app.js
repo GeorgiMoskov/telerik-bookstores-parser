@@ -53,7 +53,13 @@ const getAllBooksLinks = async (linkTemplate) => {
 };
 
 const getInfoFromBookPage = async (linkToBook) => {
+    const dom = await JSDOM.fromURL(linkToBook);
+    const $ = $init(dom.window);
+    
+};
 
+const scrapBooksInfo = async (linkTemplate) => {
+     const allBooksLinksArr = await getAllBooksLinks(linkTemplate);
 };
 
 
