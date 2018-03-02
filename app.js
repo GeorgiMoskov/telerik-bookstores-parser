@@ -17,8 +17,11 @@ const getPagesCount = async (linkTemplate) =>{
 };
 
 const getPagesLinks = async (linkTemplate) => {
-    //const pagesCount = await getPagesCount(linkTemplate);
-    const pagesCount = 60;
+    /*
+    USE THIS IF YOU WANT TO TAKE ALL AVALIABLE PAGES
+    const pagesCount = await getPagesCount(linkTemplate);
+    */
+    const pagesCount = 10;
     let currentPage = -1;
     const allPagesUrls = Array.from({ length: pagesCount })
     .map((el) => {
@@ -47,6 +50,10 @@ const getAllBooksLinks = async (linkTemplate) => {
     const allBooksLinks = _.flatten(booksUrlFromEachPageArr);
 
     return allBooksLinks;
+};
+
+const getInfoFromBookPage = async (linkToBook) => {
+
 };
 
 
