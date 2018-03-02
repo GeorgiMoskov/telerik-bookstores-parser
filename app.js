@@ -55,18 +55,57 @@ const getAllBooksLinks = async (linkTemplate) => {
 const getInfoFromBookPage = async (linkToBook) => {
     const dom = await JSDOM.fromURL(linkToBook);
     const $ = $init(dom.window);
-    
+
+
+    const bookDetailsJQ = $('.details');
+    const bookTitle = bookDetailsJQ.find('.title').text().trim();
+    const bookAuthor = bookDetailsJQ.find('.product-details :nth-child(2) a')
+        .text()
+        .trim();
+
+    const bookPublisher = bookDetailsJQ
+        .find('.product-details >.item:nth-child(3) a')
+        .text()
+        .trim();
+
+    const categoriesArr = bookDetailsJQ
+        .find('.product-details :nth-child(4) a')
+        .map( (index, el) => $(el).text().trim() )
+        .get();
+
+    console.log(categoriesArr);
+
+    console.log('---'.repeat(10));
+    console.log('title: '+ bookTitle);
+    console.log('Author: '+ bookAuthor);
+    console.log('Publisher: '+ bookPublisher);
+    console.log('categories: ');
+    categoriesArr.forEach((el) => {
+        console.log('-'+ el);
+    });
 };
 
 const scrapBooksInfo = async (linkTemplate) => {
      const allBooksLinksArr = await getAllBooksLinks(linkTemplate);
+    // allBooksLinksArr.forEach( (el) => await getInfoFromBookPage(el) );
+    
+    /* for(let i=0; i<allBooksLinksArr.length;i++){
+        await getInfoFromBookPage(allBooksLinksArr[i]);
+    } */
+
+    const promises = allBooksLinksArr.map(getInfoFromBookPage);
+    await Promise.all(promises);
+    
 };
 
 
 const webPageTemplate = 'https://www.chapter.bg/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B8-%D1%85%D1%83%D0%B4%D0%BE%D0%B6%D0%B5%D1%81%D1%82%D0%B2%D0%B5%D0%BD%D0%B0-%D0%BB%D0%B8%D1%82%D0%B5%D1%80%D0%B0%D1%82%D1%83%D1%80%D0%B0-cat-20.html?page=';
 
 const main = async () => {
-    const allBooksLinks = await getAllBooksLinks(webPageTemplate);
-    console.log(allBooksLinks.join('\n'));
+    // const allBooksLinks = await getAllBooksLinks(webPageTemplate);
+    // console.log(allBooksLinks.join('\n'));
+
+    //await getInfoFromBookPage('https://www.chapter.bg/%D0%B5%D0%B4%D0%B8%D0%BD-%D0%BE%D1%82-%D0%BD%D0%B0%D1%81-%D0%BB%D1%8A%D0%B6%D0%B5-prod-5515.html');
+    await scrapBooksInfo(webPageTemplate);
 };
 main();
