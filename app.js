@@ -1,33 +1,34 @@
-const { JSDOM } = require('jsdom');
+const {
+    JSDOM,
+} = require('jsdom');
 const $init = require('jquery');
 const _ = require('lodash');
 
-const getPagesCount = async (linkTemplate) =>{
+const getPagesCount = async (linkTemplate) => {
     const linkToScrap = linkTemplate + 1;
     const dom = await JSDOM.fromURL(linkToScrap);
     const $ = $init(dom.window);
     let pagesCount = 0;
     $('ul.pagination li')
-    .each( (index, el) => {
-       if ( $.isNumeric($(el).text()) ) {
-        pagesCount = Number($(el).text());
-       }
-    });
+        .each((index, el) => {
+            if ($.isNumeric($(el).text())) {
+                pagesCount = Number($(el).text());
+            }
+        });
     return pagesCount;
 };
 
 const getPagesLinks = async (linkTemplate) => {
-    /*
-    USE THIS IF YOU WANT TO TAKE ALL AVALIABLE PAGES
     const pagesCount = await getPagesCount(linkTemplate);
-    */
-    const pagesCount = 10;
-    let currentPage = -1;
-    const allPagesUrls = Array.from({ length: pagesCount })
-    .map((el) => {
-        currentPage +=1;
-        return (linkTemplate + currentPage);
-    });
+    // pagesCount = 20; //manually limit to 20 pages
+    let currentPage = 0;
+    const allPagesUrls = Array.from({
+            length: pagesCount,
+        })
+        .map((el) => {
+            currentPage += 1;
+            return (linkTemplate + currentPage);
+        });
 
     return allPagesUrls;
 };
@@ -36,27 +37,43 @@ const getAllBooksLinkFromPage = async (linkToScrap) => {
     const dom = await JSDOM.fromURL(linkToScrap);
     const $ = $init(dom.window);
     const allHeadings = $('.browse .product_item>h3>a');
-    const bookLinks = Array({ from: allHeadings.length });
-    allHeadings.each((index, el)=>{
-        bookLinks[index] = 'https://www.chapter.bg/'+ $(el).attr('href');
+    const bookLinks = Array({
+        from: allHeadings.length,
+    });
+    allHeadings.each((index, el) => {
+        bookLinks[index] = 'https://www.chapter.bg/' + $(el).attr('href');
     });
     return bookLinks;
 };
 
 const getAllBooksLinks = async (linkTemplate) => {
     const allPagesLinksArr = await getPagesLinks(linkTemplate);
-    const promises = allPagesLinksArr.map(getAllBooksLinkFromPage);
-    const booksUrlFromEachPageArr = await Promise.all(promises);
-    const allBooksLinks = _.flatten(booksUrlFromEachPageArr);
+    const pagesNumberPerAsync = 60;
+    const allPagesLinksCount = allPagesLinksArr.length;
+    let allBooksLinks = [];
+    for (let i = 0; i < allPagesLinksCount; i += pagesNumberPerAsync) {
+        const startIndex = i;
+        let endIndex = i + pagesNumberPerAsync;
+        if (endIndex >= allPagesLinksArr.length) {
+            endIndex = allPagesLinksCount;
+        }
 
+        const promises = allPagesLinksArr
+            .slice(startIndex, endIndex)
+            .map(getAllBooksLinkFromPage);
+
+        const booksUrlFromEachPageArr = await Promise.all(promises);
+        allBooksLinks = allBooksLinks
+            .concat(
+                _.flatten(booksUrlFromEachPageArr)
+            );
+    }
     return allBooksLinks;
 };
-
+var INDEX = 0;
 const getInfoFromBookPage = async (linkToBook) => {
     const dom = await JSDOM.fromURL(linkToBook);
     const $ = $init(dom.window);
-
-
     const bookDetailsJQ = $('.details');
     const bookTitle = bookDetailsJQ.find('.title').text().trim();
     const bookAuthor = bookDetailsJQ.find('.product-details :nth-child(2) a')
@@ -70,32 +87,39 @@ const getInfoFromBookPage = async (linkToBook) => {
 
     const categoriesArr = bookDetailsJQ
         .find('.product-details :nth-child(4) a')
-        .map( (index, el) => $(el).text().trim() )
+        .map((index, el) => $(el).text().trim())
         .get();
 
-    console.log(categoriesArr);
-
+    // console.log(categoriesArr);
+    console.log('N:'+ INDEX);
     console.log('---'.repeat(10));
-    console.log('title: '+ bookTitle);
-    console.log('Author: '+ bookAuthor);
-    console.log('Publisher: '+ bookPublisher);
+    console.log('title: ' + bookTitle);
+    console.log('Author: ' + bookAuthor);
+    console.log('Publisher: ' + bookPublisher);
     console.log('categories: ');
     categoriesArr.forEach((el) => {
-        console.log('-'+ el);
+        console.log('-' + el);
     });
+    INDEX++;
 };
 
 const scrapBooksInfo = async (linkTemplate) => {
-     const allBooksLinksArr = await getAllBooksLinks(linkTemplate);
-    // allBooksLinksArr.forEach( (el) => await getInfoFromBookPage(el) );
-    
-    /* for(let i=0; i<allBooksLinksArr.length;i++){
-        await getInfoFromBookPage(allBooksLinksArr[i]);
-    } */
+    const allBooksLinksArr = await getAllBooksLinks(linkTemplate);
+    // allBooksLinksArr.forEach((el, index) => console.log(index+' '+el));
 
-    const promises = allBooksLinksArr.map(getInfoFromBookPage);
-    await Promise.all(promises);
-    
+    const pagesNumberPerAsync = 60;
+    for (let i=0; i<allBooksLinksArr.length; i+=pagesNumberPerAsync) {
+        const startIndex = i;
+        let endIndex = i+pagesNumberPerAsync;
+        if (endIndex > allBooksLinksArr.length) {
+            endIndex = allBooksLinksArr.length;
+        }
+        const promises = allBooksLinksArr
+            .slice(startIndex, endIndex)
+            .map(getInfoFromBookPage);
+
+        await Promise.all(promises);
+    }
 };
 
 
