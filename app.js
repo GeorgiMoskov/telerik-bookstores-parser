@@ -19,8 +19,8 @@ const getPagesCount = async (linkTemplate) => {
 };
 
 const getPagesLinks = async (linkTemplate) => {
-    const pagesCount = await getPagesCount(linkTemplate);
-    // pagesCount = 20; //manually limit to 20 pages
+    // const pagesCount = await getPagesCount(linkTemplate);
+    const pagesCount = 40; // manually limit to 20 pages
     let currentPage = 0;
     const allPagesUrls = Array.from({
             length: pagesCount,
@@ -46,90 +46,106 @@ const getAllBooksLinkFromPage = async (linkToScrap) => {
     return bookLinks;
 };
 
-const getAllBooksLinks = async (linkTemplate) => {
-    const allPagesLinksArr = await getPagesLinks(linkTemplate);
-    const pagesNumberPerAsync = 60;
-    const allPagesLinksCount = allPagesLinksArr.length;
-    let allBooksLinks = [];
-    for (let i = 0; i < allPagesLinksCount; i += pagesNumberPerAsync) {
-        const startIndex = i;
-        let endIndex = i + pagesNumberPerAsync;
-        if (endIndex >= allPagesLinksArr.length) {
-            endIndex = allPagesLinksCount;
-        }
-
-        const promises = allPagesLinksArr
-            .slice(startIndex, endIndex)
-            .map(getAllBooksLinkFromPage);
-
-        const booksUrlFromEachPageArr = await Promise.all(promises);
-        allBooksLinks = allBooksLinks
-            .concat(
-                _.flatten(booksUrlFromEachPageArr)
-            );
+const getAllBookLinksInInterval = async (startIndex, pagesNumberPerAsync, allPagesLinksArr) => {
+    let endIndex = startIndex + pagesNumberPerAsync;
+    let stop = false;
+    if (endIndex >= allPagesLinksArr.length) {
+        endIndex = allPagesLinksArr.length;
+        stop = true;
     }
-    return allBooksLinks;
+    const promises = allPagesLinksArr
+        .slice(startIndex, endIndex)
+        .map(getAllBooksLinkFromPage);
+
+    let arrOfCurrentBooksUrls = await Promise.all(promises);
+    arrOfCurrentBooksUrls = _.flatten(arrOfCurrentBooksUrls);
+    let arrOfSomeBooksUlrs = [];
+    if (!stop) {
+        arrOfSomeBooksUlrs = await getAllBookLinksInInterval(endIndex, pagesNumberPerAsync, allPagesLinksArr);
+        console.log('vleze navutre');
+    }
+    return arrOfCurrentBooksUrls.concat(_.flatten(arrOfSomeBooksUlrs));
+
 };
-var INDEX = 0;
+
+const getAllBooksLinks = async (linkTemplate, pagesNumberPerAsync) => {
+    const allPagesLinksArr = await getPagesLinks(linkTemplate);
+    console.log('PAGES IN TOTAL: ' + allPagesLinksArr.length);
+    let allBooksLinksArr = [];
+    allBooksLinksArr = await getAllBookLinksInInterval(0, pagesNumberPerAsync, allPagesLinksArr);
+    return allBooksLinksArr;
+};
+
 const getInfoFromBookPage = async (linkToBook) => {
-    const dom = await JSDOM.fromURL(linkToBook);
-    const $ = $init(dom.window);
-    const bookDetailsJQ = $('.details');
-    const bookTitle = bookDetailsJQ.find('.title').text().trim();
-    const bookAuthor = bookDetailsJQ.find('.product-details :nth-child(2) a')
-        .text()
-        .trim();
+    try {
+        const dom = await JSDOM.fromURL(linkToBook);
+        const $ = $init(dom.window);
+        const bookDetailsJQ = $('.details');
+        const bookTitle = bookDetailsJQ.find('.title').text().trim();
+        const bookAuthor = bookDetailsJQ.find('.product-details :nth-child(2) a')
+            .text()
+            .trim();
 
-    const bookPublisher = bookDetailsJQ
-        .find('.product-details >.item:nth-child(3) a')
-        .text()
-        .trim();
+        const bookPublisher = bookDetailsJQ
+            .find('.product-details >.item:nth-child(3) a')
+            .text()
+            .trim();
 
-    const categoriesArr = bookDetailsJQ
-        .find('.product-details :nth-child(4) a')
-        .map((index, el) => $(el).text().trim())
-        .get();
-
-    // console.log(categoriesArr);
-    console.log('N:'+ INDEX);
-    console.log('---'.repeat(10));
-    console.log('title: ' + bookTitle);
-    console.log('Author: ' + bookAuthor);
-    console.log('Publisher: ' + bookPublisher);
-    console.log('categories: ');
-    categoriesArr.forEach((el) => {
-        console.log('-' + el);
-    });
-    INDEX++;
+        const categoriesArr = bookDetailsJQ
+            .find('.product-details :nth-child(4) a')
+            .map((index, el) => $(el).text().trim())
+            .get();
+    } catch (e) {
+        throw e;
+    }
 };
 
-const scrapBooksInfo = async (linkTemplate) => {
-    const allBooksLinksArr = await getAllBooksLinks(linkTemplate);
-    // allBooksLinksArr.forEach((el, index) => console.log(index+' '+el));
+const wait = (secs) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, secs * 1000);
+    });
+};
 
-    const pagesNumberPerAsync = 60;
-    for (let i=0; i<allBooksLinksArr.length; i+=pagesNumberPerAsync) {
-        const startIndex = i;
-        let endIndex = i+pagesNumberPerAsync;
+const getBooksInfoInInteval = async (startIndex, pagesNumberPerAsync, allBooksLinksArr) => {
+    try {
+        let endIndex = startIndex + pagesNumberPerAsync;
+        let stop = false;
         if (endIndex > allBooksLinksArr.length) {
             endIndex = allBooksLinksArr.length;
+            stop = true;
         }
+        console.log('start: ' + startIndex);
+        console.log('end: ' + endIndex);
+
         const promises = allBooksLinksArr
             .slice(startIndex, endIndex)
             .map(getInfoFromBookPage);
-
         await Promise.all(promises);
+
+        if (!stop) {
+            await getBooksInfoInInteval(endIndex, pagesNumberPerAsync, allBooksLinksArr);
+        }
+    } catch (e) {
+        console.log('Server restricts our request!');
+        console.log(new Date());
+        await wait(10);
+        console.log(new Date());
+        return getBooksInfoInInteval(startIndex, pagesNumberPerAsync, allBooksLinksArr);
     }
 };
 
+const scrapBooksInfo = async (linkTemplate) => {
+    const pagesNumberPerAsync = 20;
+    const allBooksLinksArr = await getAllBooksLinks(linkTemplate, pagesNumberPerAsync);
 
-const webPageTemplate = 'https://www.chapter.bg/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B8-%D1%85%D1%83%D0%B4%D0%BE%D0%B6%D0%B5%D1%81%D1%82%D0%B2%D0%B5%D0%BD%D0%B0-%D0%BB%D0%B8%D1%82%D0%B5%D1%80%D0%B0%D1%82%D1%83%D1%80%D0%B0-cat-20.html?page=';
+    console.log('BOOKS IN TOTAL: ' + allBooksLinksArr.length);
+    getBooksInfoInInteval(0, pagesNumberPerAsync, allBooksLinksArr);
+};
+
+
+const webPageTemplate = 'https://www.chapter.bg/книги?page=';
 
 const main = async () => {
-    // const allBooksLinks = await getAllBooksLinks(webPageTemplate);
-    // console.log(allBooksLinks.join('\n'));
-
-    //await getInfoFromBookPage('https://www.chapter.bg/%D0%B5%D0%B4%D0%B8%D0%BD-%D0%BE%D1%82-%D0%BD%D0%B0%D1%81-%D0%BB%D1%8A%D0%B6%D0%B5-prod-5515.html');
     await scrapBooksInfo(webPageTemplate);
 };
 main();
