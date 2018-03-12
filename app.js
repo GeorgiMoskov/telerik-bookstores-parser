@@ -20,7 +20,7 @@ const getPagesCount = async (linkTemplate) => {
 
 const getPagesLinks = async (linkTemplate) => {
     // const pagesCount = await getPagesCount(linkTemplate);
-    const pagesCount = 40; // manually limit to 20 pages
+    const pagesCount = 10; // manually limit to 20 pages
     let currentPage = 0;
     const allPagesUrls = Array.from({
             length: pagesCount,
@@ -95,6 +95,13 @@ const getInfoFromBookPage = async (linkToBook) => {
             .find('.product-details :nth-child(4) a')
             .map((index, el) => $(el).text().trim())
             .get();
+        
+        const bookObj = {};
+        bookObj.bookTitle = bookTitle;
+        bookObj.bookAuthor = bookAuthor;
+        bookObj.bookPublisher = bookPublisher;
+        bookObj.categoriesArr = [...categoriesArr];
+        return bookObj;
     } catch (e) {
         throw e;
     }
@@ -120,11 +127,14 @@ const getBooksInfoInInteval = async (startIndex, pagesNumberPerAsync, allBooksLi
         const promises = allBooksLinksArr
             .slice(startIndex, endIndex)
             .map(getInfoFromBookPage);
-        await Promise.all(promises);
-
+        
+        let arrOfBooksObjToBeReturned = [];
+        const curArrOfBooksObj = await Promise.all(promises);
+         arrOfBooksObjToBeReturned = arrOfBooksObjToBeReturned.concat(curArrOfBooksObj);
         if (!stop) {
-            await getBooksInfoInInteval(endIndex, pagesNumberPerAsync, allBooksLinksArr);
+            arrOfBooksObjToBeReturned = arrOfBooksObjToBeReturned.concat(await getBooksInfoInInteval(endIndex, pagesNumberPerAsync, allBooksLinksArr));
         }
+        return [...arrOfBooksObjToBeReturned];
     } catch (e) {
         console.log('Server restricts our request!');
         console.log(new Date());
@@ -137,9 +147,15 @@ const getBooksInfoInInteval = async (startIndex, pagesNumberPerAsync, allBooksLi
 const scrapBooksInfo = async (linkTemplate) => {
     const pagesNumberPerAsync = 20;
     const allBooksLinksArr = await getAllBooksLinks(linkTemplate, pagesNumberPerAsync);
-
     console.log('BOOKS IN TOTAL: ' + allBooksLinksArr.length);
-    getBooksInfoInInteval(0, pagesNumberPerAsync, allBooksLinksArr);
+    const arrOfAllBooks = await getBooksInfoInInteval(0, pagesNumberPerAsync, allBooksLinksArr);
+    arrOfAllBooks.forEach((el) => {
+        console.log(el.bookTitle);
+        console.log(el.bookAuthor);
+        console.log(el.bookPublisher);
+        console.log(el.categoriesArr);
+        console.log('--'.repeat(30));
+    });
 };
 
 
