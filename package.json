@@ -4,7 +4,9 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate": "node_modules/.bin/sequelize db:migrate",
+    "add-migration": "node node_modules/sequelize-auto-migrations/bin/makemigration.js --name"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +19,10 @@
     "babel-eslint": "^8.2.2",
     "jquery": "^3.3.1",
     "jsdom": "^11.6.2",
-    "lodash": "^4.17.5"
+    "lodash": "^4.17.5",
+    "mysql2": "^1.5.2",
+    "sequelize": "^4.36.0",
+    "sequelize-auto-migrations": "^1.0.2",
+    "sequelize-cli": "^4.0.0"
   }
 }

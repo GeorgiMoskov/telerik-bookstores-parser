@@ -1,0 +1,10 @@
+{
+  "development": {
+    "username": "root",
+    "password": "12qw12qw",
+    "database": "book_store_crawler_db",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "logging": false
+  }
+}
