@@ -36,9 +36,14 @@ const clearAllTables = async () => {
             }),
         ]);
     } catch (e) {
+        console.log('tcccc');
        await clearAllTables();
     }
 };
+
+// Promise.resolve(clearAllTables()).then(function(){
+//     console.log('finish');
+// });
 
 module.exports = {
     clearAllTables,
