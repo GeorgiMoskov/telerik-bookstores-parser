@@ -7,33 +7,37 @@ const {
 } = require('./models');
 
 const clearAllTables = async () => {
-    await Promise.all([
-        Book.destroy({
-            truncate: {
-                cascade: true,
-            },
-        }),
-        Author.destroy({
-            truncate: {
-                cascade: true,
-            },
-        }),
-        Category.destroy({
-            truncate: {
-                cascade: true,
-            },
-        }),
-        Publisher.destroy({
-            truncate: {
-                cascade: true,
-            },
-        }),
-        Website.destroy({
-            truncate: {
-                cascade: true,
-            },
-        }),
-    ]);
+    try {
+        await Promise.all([
+            Book.destroy({
+                truncate: {
+                    cascade: true,
+                },
+            }),
+            Author.destroy({
+                truncate: {
+                    cascade: true,
+                },
+            }),
+            Category.destroy({
+                truncate: {
+                    cascade: true,
+                },
+            }),
+            Publisher.destroy({
+                truncate: {
+                    cascade: true,
+                },
+            }),
+            Website.destroy({
+                truncate: {
+                    cascade: true,
+                },
+            }),
+        ]);
+    } catch (e) {
+       await clearAllTables();
+    }
 };
 
 module.exports = {

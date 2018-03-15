@@ -29,10 +29,12 @@ const scrapBooksInfo = async () => {
         scrapFromElixiraBg(),
        ]
    ));
-    eneterDataToDb(arrOfAllBooks);
+    await eneterDataToDb(arrOfAllBooks);
 };
 const main = async () => {
     await clearAllTables();
     await scrapBooksInfo();
 };
-main();
+Promise.resolve(main()).then(function() {
+    process.exit();
+});

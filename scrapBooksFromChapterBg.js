@@ -20,7 +20,7 @@ const getPagesCount = async (linkTemplate) => {
 
 const getPagesLinks = async (linkTemplate) => {
     // const pagesCount = await getPagesCount(linkTemplate);
-    const pagesCount = 2; // manually limit to 20 pages
+    const pagesCount = 10; // manually limit to 20 pages
     let currentPage = 0;
     const allPagesUrls = Array.from({
             length: pagesCount,
