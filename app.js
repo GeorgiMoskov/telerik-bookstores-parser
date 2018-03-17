@@ -17,24 +17,21 @@ const {
 const _ = require('lodash');
 
 const scrapBooksInfo = async () => {
-    /* let arrOfAllBooks = [];
-    const arrOfBooksObjsFromChapterBg = await scrapFromChapterBg();
-    arrOfAllBooks = arrOfAllBooks.concat(arrOfBooksObjsFromChapterBg);
-    const arrOfBooksObjsFromElexiraBg = await scrapFromElixiraBg();
-    arrOfAllBooks = arrOfAllBooks.concat(arrOfBooksObjsFromElexiraBg);
-    */
-     const arrOfAllBooks = _.flatten( await Promise.all(
-       [
-        scrapFromChapterBg(),
-        scrapFromElixiraBg(),
-       ]
-   ));
+    const arrOfAllBooks = _.flatten(await Promise.all(
+        [
+            scrapFromChapterBg(),
+            scrapFromElixiraBg(),
+        ]
+    ));
     await eneterDataToDb(arrOfAllBooks);
 };
 const main = async () => {
     await clearAllTables();
     await scrapBooksInfo();
 };
-Promise.resolve(main()).then(function() {
-    process.exit();
-});
+Promise.resolve(main())
+    .then(() => {
+        /* eslint-disable */
+        process.exit();
+        /* eslint-enable */
+    });

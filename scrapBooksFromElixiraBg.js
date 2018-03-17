@@ -50,7 +50,8 @@ const getAllBooksLinkFromPage = async (linkToScrap) => {
     return bookLinks;
 };
 
-const getAllBookLinksInInterval = async (startIndex, pagesNumberPerAsync, allPagesLinksArr) => {
+const getAllBookLinksInInterval = async (startIndex,
+    pagesNumberPerAsync, allPagesLinksArr) => {
     let endIndex = startIndex + pagesNumberPerAsync;
     let stop = false;
     if (endIndex >= allPagesLinksArr.length) {
@@ -65,7 +66,8 @@ const getAllBookLinksInInterval = async (startIndex, pagesNumberPerAsync, allPag
     arrOfCurrentBooksUrls = _.flatten(arrOfCurrentBooksUrls);
     let arrOfSomeBooksUlrs = [];
     if (!stop) {
-        arrOfSomeBooksUlrs = await getAllBookLinksInInterval(endIndex, pagesNumberPerAsync, allPagesLinksArr);
+        arrOfSomeBooksUlrs = await getAllBookLinksInInterval(endIndex,
+            pagesNumberPerAsync, allPagesLinksArr);
     }
     return arrOfCurrentBooksUrls.concat(_.flatten(arrOfSomeBooksUlrs));
 };
@@ -74,7 +76,9 @@ const getAllBooksLinks = async (linkTemplate, pagesNumberPerAsync) => {
     const allPagesLinksArr = await getPagesLinks(linkTemplate);
     console.log('PAGES IN TOTAL: ' + allPagesLinksArr.length);
     let allBooksLinksArr = [];
-    allBooksLinksArr = await getAllBookLinksInInterval(0, pagesNumberPerAsync, allPagesLinksArr);
+    allBooksLinksArr = await getAllBookLinksInInterval(0,
+        pagesNumberPerAsync, allPagesLinksArr);
+
     return allBooksLinksArr;
 };
 
@@ -123,7 +127,8 @@ const wait = (secs) => {
     });
 };
 
-const getBooksInfoInInteval = async (startIndex, pagesNumberPerAsync, allBooksLinksArr) => {
+const getBooksInfoInInteval = async (startIndex,
+    pagesNumberPerAsync, allBooksLinksArr) => {
     try {
         let endIndex = startIndex + pagesNumberPerAsync;
         let stop = false;
@@ -140,9 +145,15 @@ const getBooksInfoInInteval = async (startIndex, pagesNumberPerAsync, allBooksLi
 
         let arrOfBooksObjToBeReturned = [];
         const curArrOfBooksObj = await Promise.all(promises);
-        arrOfBooksObjToBeReturned = arrOfBooksObjToBeReturned.concat(curArrOfBooksObj);
+        arrOfBooksObjToBeReturned = arrOfBooksObjToBeReturned
+            .concat(curArrOfBooksObj);
+
         if (!stop) {
-            arrOfBooksObjToBeReturned = arrOfBooksObjToBeReturned.concat(await getBooksInfoInInteval(endIndex, pagesNumberPerAsync, allBooksLinksArr));
+            arrOfBooksObjToBeReturned = arrOfBooksObjToBeReturned
+                .concat(
+                    await getBooksInfoInInteval(endIndex,
+                        pagesNumberPerAsync, allBooksLinksArr)
+                );
         }
         return arrOfBooksObjToBeReturned;
     } catch (e) {
@@ -150,21 +161,23 @@ const getBooksInfoInInteval = async (startIndex, pagesNumberPerAsync, allBooksLi
         console.log(new Date());
         await wait(10);
         console.log(new Date());
-        return getBooksInfoInInteval(startIndex, pagesNumberPerAsync, allBooksLinksArr);
+        return getBooksInfoInInteval(startIndex,
+            pagesNumberPerAsync, allBooksLinksArr);
     }
 };
 
 const scrapFromElixiraBg = async () => {
     const linkTemplate = 'https://www.elixiria.bg/%D1%85%D1%83%D0%B4%D0%BE%D0%B6%D0%B5%D1%81%D1%82%D0%B2%D0%B5%D0%BD%D0%B0-%D0%BB%D0%B8%D1%82%D0%B5%D1%80%D0%B0%D1%82%D1%83%D1%80%D0%B0?limit=25&page=';
     const pagesNumberPerAsync = 20;
-    const allBooksLinksArr = await getAllBooksLinks(linkTemplate, pagesNumberPerAsync);
+    const allBooksLinksArr = await getAllBooksLinks(linkTemplate,
+        pagesNumberPerAsync);
+
     console.log('BOOKS IN TOTAL: ' + allBooksLinksArr.length);
-    const arrOfAllBooksObjs = await getBooksInfoInInteval(0, pagesNumberPerAsync, allBooksLinksArr);
+    const arrOfAllBooksObjs = await getBooksInfoInInteval(0,
+        pagesNumberPerAsync, allBooksLinksArr);
+
     return arrOfAllBooksObjs;
 };
-// module.exports = {
-//     scrapFromChapterBg,
-// };
 
 module.exports = {
     scrapFromElixiraBg,
